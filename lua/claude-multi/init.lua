@@ -1,4 +1,4 @@
-local M = {}
+local mod = {}
 
 -- Re-entry guard for terminal close handler (prevents infinite loops)
 local _handling_close = false
@@ -10,7 +10,7 @@ local ui = require("claude-multi.ui")
 local picker = require("claude-multi.picker")
 
 -- Configuration
-M.config = {
+mod.config = {
   layout = "float",      -- "float" or "sidebar"
   float_width = 0.85,
   float_height = 0.85,
@@ -18,8 +18,8 @@ M.config = {
 }
 
 -- Setup function (called from plugin spec)
-function M.setup(opts)
-  M.config = vim.tbl_extend("force", M.config, opts or {})
+function mod.setup(opts)
+  mod.config = vim.tbl_extend("force", mod.config, opts or {})
 
   -- Setup highlights
   ui.setup_highlights()
@@ -28,13 +28,13 @@ function M.setup(opts)
   state.init()
 
   -- Setup terminal close handler
-  M.setup_terminal_close_handler()
+  mod.setup_terminal_close_handler()
 end
 
 -- Get shell command for a session
 ---@param sess table Session object
 ---@return string command
-function M.get_cmd(sess)
+function mod.get_cmd(sess)
   if sess.source == "recall" then
     -- Recall TUI - user selects conversation
     return "zsh -i -c 'recall'"
@@ -45,22 +45,22 @@ function M.get_cmd(sess)
 end
 
 -- Get window options based on layout mode
-function M.get_win_opts()
+function mod.get_win_opts()
   local opts = {
     wo = {
-      winbar = M.get_winbar(),
+      winbar = mod.get_winbar(),
     },
   }
 
-  if M.config.layout == "sidebar" then
+  if mod.config.layout == "sidebar" then
     opts.position = "right"
-    opts.width = M.config.sidebar_width
+    opts.width = mod.config.sidebar_width
     opts.height = 1.0
     opts.border = "single"
   else
     opts.position = "float"
-    opts.width = M.config.float_width
-    opts.height = M.config.float_height
+    opts.width = mod.config.float_width
+    opts.height = mod.config.float_height
     opts.border = "rounded"
   end
 
@@ -68,12 +68,12 @@ function M.get_win_opts()
 end
 
 -- Get winbar string (delegates to ui module)
-function M.get_winbar()
+function mod.get_winbar()
   return ui.get_winbar()
 end
 
 -- Check if terminal window is actually visible
-function M.is_window_visible()
+function mod.is_window_visible()
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     local buf = vim.api.nvim_win_get_buf(win)
     if vim.bo[buf].buftype == "terminal" then
@@ -85,7 +85,7 @@ end
 
 -- Handle terminal process exit
 -- Delete the session and switch to left session (or close if none)
-function M.on_terminal_close(buf)
+function mod.on_terminal_close(buf)
   -- Re-entry guard to prevent infinite loops
   if _handling_close then return end
   _handling_close = true
@@ -139,9 +139,9 @@ function M.on_terminal_close(buf)
         state.set_active_session_id(next_session.id)
         -- Show the next session
         local snacks = require("snacks")
-        snacks.terminal.toggle(M.get_cmd(next_session), {
+        snacks.terminal.toggle(mod.get_cmd(next_session), {
           count = next_session.id,
-          win = M.get_win_opts(),
+          win = mod.get_win_opts(),
           auto_close = true,
         })
         ui.update_winbar()
@@ -153,36 +153,36 @@ function M.on_terminal_close(buf)
 end
 
 -- Setup autocmd for terminal close (called once on first toggle)
-function M.setup_terminal_close_handler()
-  if M._close_handler_setup then return end
-  M._close_handler_setup = true
+function mod.setup_terminal_close_handler()
+  if mod._close_handler_setup then return end
+  mod._close_handler_setup = true
 
   vim.api.nvim_create_autocmd("TermClose", {
     pattern = "*",
     callback = function(event)
-      M.on_terminal_close(event.buf)
+      mod.on_terminal_close(event.buf)
     end,
   })
 end
 
 
 -- Toggle the panel
-function M.toggle()
+function mod.toggle()
   local snacks = require("snacks")
 
   -- Setup close handler on first use
-  M.setup_terminal_close_handler()
+  mod.setup_terminal_close_handler()
 
   -- Sync state with actual window visibility
-  local actually_visible = M.is_window_visible()
+  local actually_visible = mod.is_window_visible()
 
   if actually_visible then
     -- Window is visible, hide it
     local active_session = state.get_active_session()
     if active_session then
-      snacks.terminal.toggle(M.get_cmd(active_session), {
+      snacks.terminal.toggle(mod.get_cmd(active_session), {
         count = active_session.id,
-        win = M.get_win_opts(),
+        win = mod.get_win_opts(),
         auto_close = true,
       })
     end
@@ -193,14 +193,14 @@ function M.toggle()
 
     if #sessions == 0 then
       -- No tabs exist, open recall
-      M.open_recall()
+      mod.open_recall()
     else
       -- Show existing active session
       local active_session = state.get_active_session()
       if active_session then
-        snacks.terminal.toggle(M.get_cmd(active_session), {
+        snacks.terminal.toggle(mod.get_cmd(active_session), {
           count = active_session.id,
-          win = M.get_win_opts(),
+          win = mod.get_win_opts(),
           auto_close = true,
         })
         state.set_visible(true)
@@ -211,9 +211,9 @@ function M.toggle()
 end
 
 -- Switch to specific session
-function M.switch_session(id, skip_hide_current)
+function mod.switch_session(id, skip_hide_current)
   -- Sync state with actual visibility
-  if not M.is_window_visible() then
+  if not mod.is_window_visible() then
     state.set_visible(false)
     return
   end
@@ -222,7 +222,7 @@ function M.switch_session(id, skip_hide_current)
   if id == active_id then return end
 
   local snacks = require("snacks")
-  local win_opts = M.get_win_opts()
+  local win_opts = mod.get_win_opts()
 
   -- Get session objects
   local target_session = state.get_session_by_id(id)
@@ -232,7 +232,7 @@ function M.switch_session(id, skip_hide_current)
 
   -- Hide current session
   if not skip_hide_current and current_session then
-    snacks.terminal.toggle(M.get_cmd(current_session), {
+    snacks.terminal.toggle(mod.get_cmd(current_session), {
       count = current_session.id,
       win = win_opts,
       auto_close = true,
@@ -240,7 +240,7 @@ function M.switch_session(id, skip_hide_current)
   end
 
   -- Show new session
-  snacks.terminal.toggle(M.get_cmd(target_session), {
+  snacks.terminal.toggle(mod.get_cmd(target_session), {
     count = target_session.id,
     win = win_opts,
     auto_close = true,
@@ -251,9 +251,9 @@ function M.switch_session(id, skip_hide_current)
 end
 
 -- Navigate to next session
-function M.next_session()
+function mod.next_session()
   -- Sync state with actual visibility
-  if not M.is_window_visible() then
+  if not mod.is_window_visible() then
     state.set_visible(false)
     return
   end
@@ -273,16 +273,16 @@ function M.next_session()
 
   -- Navigate to next session (wrap around to first)
   if idx >= #sessions then
-    M.switch_session(sessions[1].id)
+    mod.switch_session(sessions[1].id)
   else
-    M.switch_session(sessions[idx + 1].id)
+    mod.switch_session(sessions[idx + 1].id)
   end
 end
 
 -- Navigate to previous session
-function M.prev_session()
+function mod.prev_session()
   -- Sync state with actual visibility
-  if not M.is_window_visible() then
+  if not mod.is_window_visible() then
     state.set_visible(false)
     return
   end
@@ -302,27 +302,27 @@ function M.prev_session()
 
   -- Navigate to previous session (wrap around to last)
   if idx <= 1 then
-    M.switch_session(sessions[#sessions].id)
+    mod.switch_session(sessions[#sessions].id)
   else
-    M.switch_session(sessions[idx - 1].id)
+    mod.switch_session(sessions[idx - 1].id)
   end
 end
 
 -- Open recall TUI for session selection
-function M.open_recall()
+function mod.open_recall()
   local snacks = require("snacks")
 
   -- Setup close handler on first use
-  M.setup_terminal_close_handler()
+  mod.setup_terminal_close_handler()
 
   -- Create a new session with recall source
   local new_session = session.create(nil, "recall")
   state.set_active_session_id(new_session.id)
 
   -- Open recall in terminal
-  snacks.terminal.toggle(M.get_cmd(new_session), {
+  snacks.terminal.toggle(mod.get_cmd(new_session), {
     count = new_session.id,
-    win = M.get_win_opts(),
+    win = mod.get_win_opts(),
     auto_close = true,
   })
 
@@ -331,20 +331,20 @@ function M.open_recall()
 end
 
 -- Create a fresh claude session
-function M.new_session()
+function mod.new_session()
   local snacks = require("snacks")
 
   -- Setup close handler on first use
-  M.setup_terminal_close_handler()
+  mod.setup_terminal_close_handler()
 
-  local win_opts = M.get_win_opts()
-  local currently_visible = M.is_window_visible()
+  local win_opts = mod.get_win_opts()
+  local currently_visible = mod.is_window_visible()
 
   -- Hide current session if visible
   if currently_visible then
     local current_session = state.get_active_session()
     if current_session then
-      snacks.terminal.toggle(M.get_cmd(current_session), {
+      snacks.terminal.toggle(mod.get_cmd(current_session), {
         count = current_session.id,
         win = win_opts,
         auto_close = true,
@@ -354,7 +354,7 @@ function M.new_session()
 
   -- Create and show new session
   local new_session = session.create(nil, "new")
-  snacks.terminal.toggle(M.get_cmd(new_session), {
+  snacks.terminal.toggle(mod.get_cmd(new_session), {
     count = new_session.id,
     win = win_opts,
     auto_close = true,
@@ -366,34 +366,34 @@ function M.new_session()
 end
 
 -- Close current tab (remove from working memory)
-function M.close_tab()
+function mod.close_tab()
   local active_session = state.get_active_session()
   if not active_session then return end
 
   local snacks = require("snacks")
 
   -- Close the terminal (this will trigger on_terminal_close)
-  snacks.terminal.toggle(M.get_cmd(active_session), {
+  snacks.terminal.toggle(mod.get_cmd(active_session), {
     count = active_session.id,
-    win = M.get_win_opts(),
+    win = mod.get_win_opts(),
     auto_close = true,
   })
 end
 
 -- Quick-jump mode (delegates to picker module)
-function M.pick_session()
+function mod.pick_session()
   picker.start_pick()
 end
 
 -- Update winbar on current terminal window (delegates to ui module)
-function M.update_winbar()
+function mod.update_winbar()
   ui.update_winbar()
 end
 
 ---Get active session (for external use)
 ---@return table? session
-function M.get_active_session()
+function mod.get_active_session()
   return state.get_active_session()
 end
 
-return M
+return mod
