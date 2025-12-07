@@ -8,8 +8,8 @@ A multi-session Claude Code terminal manager for Neovim. Manage multiple Claude 
 - **Tab-based interface**: Navigate between sessions with a visual winbar
 - **Recall integration**: Browse and resume previous conversations using the [recall](https://github.com/hrishioa/recall) CLI
 - **Flexible layouts**: Choose between floating window or sidebar modes
-- **Session persistence**: Automatically handles terminal lifecycle
-- **Keyboard-first navigation**: Efficiently switch between sessions without touching your mouse
+- **Built-in commands**: User commands like `:ClaudeToggle`, `:ClaudeNew`, etc.
+- **Sensible defaults**: Works out of the box with zero configuration
 
 ## Requirements
 
@@ -27,48 +27,76 @@ A multi-session Claude Code terminal manager for Neovim. Manage multiple Claude 
   "mb6611/claude-multi.nvim",
   dependencies = { "folke/snacks.nvim" },
   event = "VeryLazy",
-  config = function()
-    require("claude-multi").setup({
-      layout = "float", -- "float" or "sidebar"
-    })
-  end,
-  keys = {
-    { "<C-a>", function() require("claude-multi").toggle() end, mode = { "n", "t" }, desc = "Toggle Claude" },
-    { "<C-r>", function() require("claude-multi").open_recall() end, mode = { "n", "t" }, desc = "Open Recall" },
-    { "<C-n>", function() require("claude-multi").new_session() end, mode = { "n", "t" }, desc = "New Session" },
-    { "<M-h>", function() require("claude-multi").prev_session() end, mode = { "n", "t" }, desc = "Previous Session" },
-    { "<M-l>", function() require("claude-multi").next_session() end, mode = { "n", "t" }, desc = "Next Session" },
-    { "<C-w>", function() require("claude-multi").close_tab() end, mode = "t", desc = "Close Tab" },
+  opts = {},
+}
+```
+
+That's it! The plugin includes sensible default keymaps and registers user commands automatically.
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `:ClaudeToggle` | Toggle Claude panel (opens recall if no sessions) |
+| `:ClaudeRecall` | Open recall TUI to browse conversation history |
+| `:ClaudeNew` | Create a new fresh Claude session |
+| `:ClaudeNext` | Navigate to next session |
+| `:ClaudePrev` | Navigate to previous session |
+| `:ClaudeClose` | Close current tab/session |
+
+## Default Keymaps
+
+All keymaps work in both normal and terminal modes.
+
+| Key | Action |
+|-----|--------|
+| `<leader>cc` | Toggle Claude panel |
+| `<leader>cr` | Open Recall TUI |
+| `<leader>cn` | New session |
+| `<leader>ch` | Previous session |
+| `<leader>cl` | Next session |
+| `<leader>cx` | Close tab |
+
+## Configuration
+
+### Default Options
+
+```lua
+{
+  "mb6611/claude-multi.nvim",
+  dependencies = { "folke/snacks.nvim" },
+  event = "VeryLazy",
+  opts = {
+    layout = "float",         -- "float" or "sidebar"
+    float_width = 0.85,       -- Float mode width (0.0-1.0)
+    float_height = 0.85,      -- Float mode height (0.0-1.0)
+    sidebar_width = 0.4,      -- Sidebar mode width (0.0-1.0)
+    keymaps = {
+      toggle = "<leader>cc",
+      recall = "<leader>cr",
+      new_session = "<leader>cn",
+      prev_session = "<leader>ch",
+      next_session = "<leader>cl",
+      close_tab = "<leader>cx",
+    },
   },
 }
 ```
 
-## Default Keybindings
+### Customizing Keymaps
 
-All keybindings work in both normal (`n`) and terminal (`t`) modes unless specified otherwise.
-
-| Key       | Mode | Action                                           |
-|-----------|------|--------------------------------------------------|
-| `<C-a>`   | n, t | Toggle Claude panel (opens recall if no sessions) |
-| `<C-r>`   | n, t | Open recall TUI to browse conversation history   |
-| `<C-n>`   | n, t | Create a new fresh Claude session               |
-| `<M-h>`   | n, t | Navigate to previous session (wraps around)      |
-| `<M-l>`   | n, t | Navigate to next session (wraps around)          |
-| `<C-w>`   | t    | Close current tab/session                        |
-
-**Note**: `<M-h>` and `<M-l>` use the Meta/Alt key to avoid conflicts with tmux default keybindings.
-
-## Configuration
-
-### Options
+Override any keymap or disable it by setting to `false`:
 
 ```lua
-require("claude-multi").setup({
-  layout = "float",         -- "float" or "sidebar"
-  float_width = 0.85,       -- Float mode width (0.0-1.0)
-  float_height = 0.85,      -- Float mode height (0.0-1.0)
-  sidebar_width = 0.4,      -- Sidebar mode width (0.0-1.0)
-})
+opts = {
+  keymaps = {
+    -- Use Alt+h/l for faster navigation
+    prev_session = "<M-h>",
+    next_session = "<M-l>",
+    -- Disable a keymap
+    close_tab = false,
+  },
+}
 ```
 
 ### Layout Modes
@@ -83,38 +111,22 @@ require("claude-multi").setup({
 - Single border
 - Full height
 
-### Customizing Keybindings
-
-The keybindings shown in the installation example are just suggestions. You can customize them to your preference:
-
-```lua
-keys = {
-  -- Use different keys
-  { "<leader>cc", function() require("claude-multi").toggle() end, mode = { "n", "t" }, desc = "Toggle Claude" },
-  { "<leader>cr", function() require("claude-multi").open_recall() end, mode = { "n", "t" }, desc = "Open Recall" },
-
-  -- Or use arrow keys for navigation
-  { "<M-Left>", function() require("claude-multi").prev_session() end, mode = { "n", "t" }, desc = "Previous Session" },
-  { "<M-Right>", function() require("claude-multi").next_session() end, mode = { "n", "t" }, desc = "Next Session" },
-}
-```
-
 ## Usage
 
 ### Basic Workflow
 
-1. **Open Claude**: Press `<C-a>` to toggle the Claude panel
+1. **Open Claude**: Press `<leader>cc` to toggle the Claude panel
    - If no sessions exist, it opens the recall TUI automatically
    - Select a conversation from history or start a new one
 
-2. **Create new sessions**: Press `<C-n>` to spawn a fresh Claude session
+2. **Create new sessions**: Press `<leader>cn` to spawn a fresh Claude session
    - Each session runs independently
    - Sessions appear as tabs in the winbar
 
-3. **Navigate sessions**: Use `<M-h>` and `<M-l>` to move between active sessions
+3. **Navigate sessions**: Use `<leader>ch` and `<leader>cl` to move between active sessions
    - Sessions wrap around (after last, goes to first)
 
-4. **Close sessions**: Press `<C-w>` in terminal mode to close the current session
+4. **Close sessions**: Press `<leader>cx` to close the current session
    - Automatically switches to the previous session
    - Panel closes if no sessions remain
 
@@ -128,14 +140,18 @@ Active session is highlighted in blue with bold text.
 
 ## Architecture
 
-The plugin is structured into modular components:
-
-- **init.lua**: Main entry point and public API
-- **state.lua**: Centralized state management with change listeners
-- **session.lua**: Session creation, validation, and lifecycle
-- **ui.lua**: Winbar rendering and highlight groups
-- **picker.lua**: Quick-jump mode for session selection (future feature)
-- **persistence.lua**: Session state persistence (future feature)
+```
+lua/claude-multi/
+├── init.lua        # Public API, commands, keymaps
+├── constants.lua   # Enum values
+├── terminal.lua    # Snacks.nvim terminal integration
+├── navigation.lua  # Session traversal
+├── window.lua      # Window configuration
+├── session.lua     # Session creation
+├── state.lua       # State management
+├── ui.lua          # Winbar rendering
+└── picker.lua      # Quick-jump mode
+```
 
 ## Why claude-multi.nvim?
 
