@@ -143,12 +143,8 @@ function M.toggle()
     local sessions = state.get_sessions()
 
     if #sessions == 0 then
-      -- No tabs exist, open recall (or new session if recall not available)
-      if M.has_recall() then
-        M.open_recall()
-      else
-        M.new_session()
-      end
+      -- No tabs exist, open new session
+      M.new_session()
     else
       -- Show existing active session
       local active_session = state.get_active_session()
