@@ -2,6 +2,10 @@
 
 A multi-session Claude Code terminal manager for Neovim. Manage multiple Claude AI conversations in parallel with a clean, tab-based interface powered by `snacks.nvim`.
 
+## Demo
+
+![Main Demo](demo/demo.gif)
+
 ## Features
 
 - **Multi-session management**: Run multiple Claude Code instances simultaneously
