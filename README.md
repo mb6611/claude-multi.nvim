@@ -6,7 +6,7 @@ A multi-session Claude Code terminal manager for Neovim. Manage multiple Claude 
 
 - **Multi-session management**: Run multiple Claude Code instances simultaneously
 - **Tab-based interface**: Navigate between sessions with a visual winbar
-- **Recall integration**: Browse and resume previous conversations using the [recall](https://github.com/hrishioa/recall) CLI
+- **Recall integration**: Browse and resume previous conversations using the [recall](https://github.com/zippoxer/recall) CLI
 - **Flexible layouts**: Choose between floating window or sidebar modes
 - **Built-in commands**: User commands like `:ClaudeToggle`, `:ClaudeNew`, etc.
 - **Sensible defaults**: Works out of the box with zero configuration
@@ -16,7 +16,7 @@ A multi-session Claude Code terminal manager for Neovim. Manage multiple Claude 
 - **Neovim 0.9+**
 - **[snacks.nvim](https://github.com/folke/snacks.nvim)**: Terminal window management
 - **[Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)**: The official Anthropic CLI tool
-- **[recall CLI](https://github.com/hrishioa/recall)**: (Optional but recommended) For browsing conversation history
+- **[recall CLI](https://github.com/zippoxer/recall)**: (Optional but recommended) For browsing conversation history
 
 ## Installation
 
