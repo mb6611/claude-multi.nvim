@@ -10,6 +10,35 @@ local terminal = require("claude-multi.terminal")
 local window = require("claude-multi.window")
 local navigation = require("claude-multi.navigation")
 
+-- Cached executable checks
+local _has_claude = nil
+local _has_recall = nil
+
+---Check if an executable exists
+---@param name string
+---@return boolean
+local function has_executable(name)
+  return vim.fn.executable(name) == 1
+end
+
+---Check if claude CLI is available (cached)
+---@return boolean
+function M.has_claude()
+  if _has_claude == nil then
+    _has_claude = has_executable("claude")
+  end
+  return _has_claude
+end
+
+---Check if recall CLI is available (cached)
+---@return boolean
+function M.has_recall()
+  if _has_recall == nil then
+    _has_recall = has_executable("recall")
+  end
+  return _has_recall
+end
+
 -- Default configuration
 M.defaults = {
   layout = constants.Layout.FLOAT,      -- FLOAT or SIDEBAR
@@ -29,12 +58,18 @@ M.defaults = {
 -- Register user commands
 function M.register_commands()
   local cmd = vim.api.nvim_create_user_command
+
+  -- Always register these (they check dependencies at runtime)
   cmd("ClaudeToggle", M.toggle, { desc = "Toggle Claude panel" })
-  cmd("ClaudeRecall", M.open_recall, { desc = "Open Recall TUI" })
   cmd("ClaudeNew", M.new_session, { desc = "New Claude session" })
   cmd("ClaudeNext", M.next_session, { desc = "Next session" })
   cmd("ClaudePrev", M.prev_session, { desc = "Previous session" })
   cmd("ClaudeClose", M.close_tab, { desc = "Close current tab" })
+
+  -- Only register recall command if recall is installed
+  if M.has_recall() then
+    cmd("ClaudeRecall", M.open_recall, { desc = "Open Recall TUI" })
+  end
 end
 
 -- Register keymaps
@@ -47,11 +82,15 @@ function M.register_keymaps()
 
   local km = M.config.keymaps
   map({ "n", "t" }, km.toggle, "<cmd>ClaudeToggle<cr>", "Toggle Claude")
-  map({ "n", "t" }, km.recall, "<cmd>ClaudeRecall<cr>", "Open Recall")
   map({ "n", "t" }, km.new_session, "<cmd>ClaudeNew<cr>", "New Session")
   map({ "n", "t" }, km.prev_session, "<cmd>ClaudePrev<cr>", "Previous Session")
   map({ "n", "t" }, km.next_session, "<cmd>ClaudeNext<cr>", "Next Session")
   map({ "n", "t" }, km.close_tab, "<cmd>ClaudeClose<cr>", "Close Tab")
+
+  -- Only register recall keymap if recall is installed
+  if M.has_recall() then
+    map({ "n", "t" }, km.recall, "<cmd>ClaudeRecall<cr>", "Open Recall")
+  end
 end
 
 -- Setup function (called from plugin spec)
@@ -74,6 +113,12 @@ end
 
 -- Toggle the panel
 function M.toggle()
+  -- Check for claude CLI
+  if not M.has_claude() then
+    vim.notify("claude-multi: 'claude' CLI not found. Install from https://docs.anthropic.com/en/docs/claude-code", vim.log.levels.ERROR)
+    return
+  end
+
   local snacks = require("snacks")
 
   -- Setup close handler on first use
@@ -98,8 +143,12 @@ function M.toggle()
     local sessions = state.get_sessions()
 
     if #sessions == 0 then
-      -- No tabs exist, open recall
-      M.open_recall()
+      -- No tabs exist, open recall (or new session if recall not available)
+      if M.has_recall() then
+        M.open_recall()
+      else
+        M.new_session()
+      end
     else
       -- Show existing active session
       local active_session = state.get_active_session()
@@ -114,6 +163,18 @@ end
 
 -- Open recall TUI for session selection
 function M.open_recall()
+  -- Check for recall CLI
+  if not M.has_recall() then
+    vim.notify("claude-multi: 'recall' CLI not found. Install from https://github.com/hrishioa/recall", vim.log.levels.ERROR)
+    return
+  end
+
+  -- Check for claude CLI (recall needs it too)
+  if not M.has_claude() then
+    vim.notify("claude-multi: 'claude' CLI not found. Install from https://docs.anthropic.com/en/docs/claude-code", vim.log.levels.ERROR)
+    return
+  end
+
   -- Setup close handler on first use
   terminal.setup_close_handler()
 
@@ -130,6 +191,12 @@ end
 
 -- Create a fresh claude session
 function M.new_session()
+  -- Check for claude CLI
+  if not M.has_claude() then
+    vim.notify("claude-multi: 'claude' CLI not found. Install from https://docs.anthropic.com/en/docs/claude-code", vim.log.levels.ERROR)
+    return
+  end
+
   local snacks = require("snacks")
 
   -- Setup close handler on first use
