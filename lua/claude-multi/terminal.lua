@@ -9,16 +9,26 @@ local constants = require("claude-multi.constants")
 -- Re-entry guard for terminal close handler (prevents infinite loops)
 local _handling_close = false
 
+-- Stored config reference (set during setup to avoid circular dependency)
+---@type table?
+local _config = nil
+
+---Set config reference (called from init.setup)
+---@param config table Plugin configuration
+function M.set_config(config)
+  _config = config
+end
+
 ---Get shell command for a session
 ---@param sess table Session object
 ---@return string command
 function M.get_cmd(sess)
-  if sess.source == constants.Source.RECALL then
-    -- Recall TUI - user selects conversation
-    return "zsh -i -c 'recall'"
+  local cmd = sess.source == constants.Source.RECALL and "recall" or "claude"
+
+  if sess.cwd then
+    return string.format("zsh -i -c 'cd %s && %s'", vim.fn.shellescape(sess.cwd), cmd)
   else
-    -- Fresh claude session
-    return "zsh -i -c 'claude'"
+    return "zsh -i -c '" .. cmd .. "'"
   end
 end
 
@@ -103,12 +113,11 @@ function M.on_terminal_close(buf)
       if new_idx > #remaining then new_idx = #remaining end
       local next_session = remaining[new_idx]
 
-      if next_session then
+      if next_session and _config then
         state.set_active_session_id(next_session.id)
         -- Show the next session
         local window = require("claude-multi.window")
-        local init = require("claude-multi")
-        M.show(next_session, window.get_win_opts(init.config))
+        M.show(next_session, window.get_win_opts(_config))
         ui.update_winbar()
       end
     end

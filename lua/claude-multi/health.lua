@@ -1,5 +1,27 @@
 local M = {}
 
+-- Cached executable checks
+local _has_claude = nil
+local _has_recall = nil
+
+---Check if claude CLI is available (cached)
+---@return boolean
+function M.has_claude()
+  if _has_claude == nil then
+    _has_claude = vim.fn.executable("claude") == 1
+  end
+  return _has_claude
+end
+
+---Check if recall CLI is available (cached)
+---@return boolean
+function M.has_recall()
+  if _has_recall == nil then
+    _has_recall = vim.fn.executable("recall") == 1
+  end
+  return _has_recall
+end
+
 function M.check()
   vim.health.start("claude-multi.nvim")
 

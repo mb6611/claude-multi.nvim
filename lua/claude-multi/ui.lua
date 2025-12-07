@@ -34,6 +34,11 @@ end
 function M.format_session_tab(session, index, is_active, pick_mode)
   local name = session.name or "Unnamed"
 
+  -- Add branch indicator if available
+  if session.branch then
+    name = name .. " [" .. session.branch .. "]"
+  end
+
   local text
   if pick_mode then
     -- Show letter labels in pick mode
