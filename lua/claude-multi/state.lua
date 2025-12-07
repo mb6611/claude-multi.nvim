@@ -9,21 +9,12 @@ local _state = {
   next_id = 1,
 }
 
--- Change listeners
-local _listeners = {}
-
 ---Initialize state with defaults or provided values
 ---@param initial_state? table Initial state to merge
 function M.init(initial_state)
   if initial_state then
     _state = vim.tbl_extend("force", _state, initial_state)
   end
-end
-
----Get a deep copy of the entire state
----@return table
-function M.get_state()
-  return vim.deepcopy(_state)
 end
 
 ---Get all sessions
@@ -57,29 +48,16 @@ function M.get_active_session_id()
   return _state.active_session_id
 end
 
----Get visibility state
----@return boolean
-function M.get_visible()
-  return _state.visible
-end
-
 ---Get pick mode state
 ---@return boolean
 function M.get_pick_mode()
   return _state.pick_mode
 end
 
----Get next ID counter
----@return number
-function M.get_next_id()
-  return _state.next_id
-end
-
 ---Set visibility state
 ---@param visible boolean
 function M.set_visible(visible)
   _state.visible = visible
-  M.notify_change()
 end
 
 ---Set active session ID
@@ -89,15 +67,7 @@ function M.set_active_session_id(id)
     return false
   end
   _state.active_session_id = id
-  M.notify_change()
   return true
-end
-
----Set pick mode
----@param enabled boolean
-function M.set_pick_mode(enabled)
-  _state.pick_mode = enabled
-  M.notify_change()
 end
 
 ---Add a session
@@ -108,7 +78,6 @@ function M.add_session(session)
     return false
   end
   table.insert(_state.sessions, vim.deepcopy(session))
-  M.notify_change()
   return true
 end
 
@@ -127,7 +96,6 @@ function M.remove_session(id)
   end
   if found then
     _state.sessions = new_sessions
-    M.notify_change()
   end
   return found
 end
@@ -143,7 +111,6 @@ function M.update_session(id, updates)
       for k, v in pairs(updates) do
         session[k] = v
       end
-      M.notify_change()
       return true
     end
   end
@@ -155,45 +122,7 @@ end
 function M.generate_next_id()
   local id = _state.next_id
   _state.next_id = _state.next_id + 1
-  M.notify_change()
   return id
-end
-
----Register a change listener
----@param callback function Called with (state) when state changes
----@return function unsubscribe function to remove listener
-function M.on_change(callback)
-  table.insert(_listeners, callback)
-  return function()
-    for i, listener in ipairs(_listeners) do
-      if listener == callback then
-        table.remove(_listeners, i)
-        break
-      end
-    end
-  end
-end
-
----Notify all listeners of state change
-function M.notify_change()
-  for _, listener in ipairs(_listeners) do
-    local ok, err = pcall(listener, M.get_state())
-    if not ok then
-      vim.notify("State listener error: " .. err, vim.log.levels.ERROR)
-    end
-  end
-end
-
----Reset state to defaults (testing helper)
-function M.reset()
-  _state = {
-    visible = false,
-    active_session_id = nil,
-    sessions = {},
-    pick_mode = false,
-    next_id = 1,
-  }
-  _listeners = {}
 end
 
 return M

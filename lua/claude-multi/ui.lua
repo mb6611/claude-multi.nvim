@@ -1,5 +1,7 @@
 local M = {}
 
+local constants = require("claude-multi.constants")
+
 ---Setup custom highlight groups
 function M.setup_highlights()
   -- Active session highlight (similar to BufferLine selected)
@@ -89,7 +91,7 @@ function M.update_winbar()
     -- Find the terminal window and update its winbar
     for _, win in ipairs(vim.api.nvim_list_wins()) do
       local buf = vim.api.nvim_win_get_buf(win)
-      if vim.bo[buf].buftype == "terminal" then
+      if vim.bo[buf].buftype == constants.BufferType.TERMINAL then
         vim.wo[win].winbar = M.get_winbar()
         break
       end

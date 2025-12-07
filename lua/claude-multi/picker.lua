@@ -42,27 +42,4 @@ function M.start_pick()
   ui.update_winbar()
 end
 
----Get session by letter
----@param char string Single character
----@return table? session
-function M.get_session_for_letter(char)
-  local state = require("claude-multi.state")
-  local sessions = state.get_sessions()
-
-  local idx = M.letters:find(char)
-  if idx and idx <= #sessions then
-    return sessions[idx]
-  end
-
-  return nil
-end
-
----Cancel pick mode without switching
-function M.cancel_pick()
-  local state = require("claude-multi.state")
-  local ui = require("claude-multi.ui")
-  state.set_pick_mode(false)
-  ui.update_winbar()
-end
-
 return M
