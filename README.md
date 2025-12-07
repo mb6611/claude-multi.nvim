@@ -6,6 +6,7 @@ A multi-session Claude Code terminal manager for Neovim. Manage multiple Claude 
 
 - **Multi-session management**: Run multiple Claude Code instances simultaneously
 - **Tab-based interface**: Navigate between sessions with a visual winbar
+- **Git worktree integration**: Run Claude sessions in different worktrees with branch indicators
 - **Recall integration**: Browse and resume previous conversations using the [recall](https://github.com/zippoxer/recall) CLI
 - **Flexible layouts**: Choose between floating window or sidebar modes
 - **Built-in commands**: User commands like `:ClaudeToggle`, `:ClaudeNew`, etc.
@@ -40,6 +41,8 @@ That's it! The plugin includes sensible default keymaps and registers user comma
 | `:ClaudeToggle` | Toggle Claude panel (opens recall if no sessions) |
 | `:ClaudeRecall` | Open recall TUI to browse conversation history |
 | `:ClaudeNew` | Create a new fresh Claude session |
+| `:ClaudeNewWorktree` | Create a new session in a git worktree |
+| `:ClaudeRecallWorktree` | Open recall TUI in a git worktree |
 | `:ClaudeNext` | Navigate to next session |
 | `:ClaudePrev` | Navigate to previous session |
 | `:ClaudeClose` | Close current tab/session |
@@ -52,7 +55,9 @@ All keymaps work in both normal and terminal modes.
 |-----|--------|
 | `<leader>cc` | Toggle Claude panel |
 | `<leader>cr` | Open Recall TUI |
+| `<leader>cR` | Open Recall TUI in worktree |
 | `<leader>cn` | New session |
+| `<leader>cw` | New session in worktree |
 | `<leader>ch` | Previous session |
 | `<leader>cl` | Next session |
 | `<leader>cx` | Close tab |
@@ -74,7 +79,9 @@ All keymaps work in both normal and terminal modes.
     keymaps = {
       toggle = "<leader>cc",
       recall = "<leader>cr",
+      recall_worktree = "<leader>cR",
       new_session = "<leader>cn",
+      new_worktree = "<leader>cw",
       prev_session = "<leader>ch",
       next_session = "<leader>cl",
       close_tab = "<leader>cx",
@@ -136,7 +143,29 @@ The winbar displays all active sessions with these prefixes:
 - `[R]`: Session resumed from recall history
 - `[N]`: Fresh new session
 
+When a session is running in a worktree, the branch name is shown: `Chat 1 [feature-branch]`
+
 Active session is highlighted in blue with bold text.
+
+### Git Worktree Integration
+
+Work on multiple branches simultaneously with dedicated Claude sessions for each worktree:
+
+1. **Create a worktree session**: Press `<leader>cw` to open the worktree picker
+   - Select an existing worktree from the list
+   - Or type a new branch name to create a new worktree automatically
+
+2. **Worktree path convention**: New worktrees are created as sibling directories:
+   ```
+   ~/code/my-project/                  # Main repo
+   ~/code/my-project-worktrees/
+   ├── feature-auth/                   # Worktree for feature/auth branch
+   └── bugfix-login/                   # Worktree for bugfix/login branch
+   ```
+
+3. **Branch context**: Each worktree session runs Claude in that worktree's directory, so Claude has full context of that branch's code state
+
+4. **Recall in worktrees**: Press `<leader>cR` to browse conversation history within a specific worktree context
 
 ## Architecture
 
@@ -150,7 +179,9 @@ lua/claude-multi/
 ├── session.lua     # Session creation
 ├── state.lua       # State management
 ├── ui.lua          # Winbar rendering
-└── picker.lua      # Quick-jump mode
+├── picker.lua      # Quick-jump mode
+├── git.lua         # Git worktree operations
+└── worktree.lua    # Worktree picker and session creation
 ```
 
 ## Why claude-multi.nvim?
