@@ -2,25 +2,16 @@ local M = {}
 
 local constants = require("claude-multi.constants")
 
----Setup custom highlight groups
+---Setup custom highlight groups (links to user's theme)
 function M.setup_highlights()
-  -- Active session highlight (similar to BufferLine selected)
-  vim.api.nvim_set_hl(0, "ClaudeMultiActive", {
-    fg = "#ffffff",
-    bg = "#2d7dd1",
-    bold = true,
-  })
+  -- Active session - link to TabLineSel (selected tab)
+  vim.api.nvim_set_hl(0, "ClaudeMultiActive", { link = "TabLineSel", default = true })
 
-  -- Inactive session highlight
-  vim.api.nvim_set_hl(0, "ClaudeMultiInactive", {
-    fg = "#888888",
-  })
+  -- Inactive session - link to TabLine (inactive tabs)
+  vim.api.nvim_set_hl(0, "ClaudeMultiInactive", { link = "TabLine", default = true })
 
-  -- Pick mode letter label highlight
-  vim.api.nvim_set_hl(0, "ClaudeMultiPickLabel", {
-    fg = "#ffcc00",
-    bold = true,
-  })
+  -- Pick mode letter label - link to WarningMsg (stands out)
+  vim.api.nvim_set_hl(0, "ClaudeMultiPickLabel", { link = "WarningMsg", default = true })
 end
 
 ---Get the letter for a given index (a, b, c, ...)
