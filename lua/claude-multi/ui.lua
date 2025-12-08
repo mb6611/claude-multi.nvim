@@ -81,15 +81,27 @@ function M.get_winbar()
   return table.concat(parts, sep)
 end
 
----Update winbar on the current terminal window
+---Update winbar on Claude-multi terminal windows only
 function M.update_winbar()
   vim.schedule(function()
-    -- Find the terminal window and update its winbar
+    local state = require("claude-multi.state")
+
+    -- Get valid session IDs
+    local sessions = state.get_sessions()
+    local session_ids = {}
+    for _, sess in ipairs(sessions) do
+      session_ids[sess.id] = true
+    end
+
+    -- Find Claude-multi terminal windows and update their winbars
     for _, win in ipairs(vim.api.nvim_list_wins()) do
       local buf = vim.api.nvim_win_get_buf(win)
       if vim.bo[buf].buftype == constants.BufferType.TERMINAL then
-        vim.wo[win].winbar = M.get_winbar()
-        break
+        -- Check if this terminal belongs to our sessions
+        local metadata = vim.b[buf].snacks_terminal
+        if metadata and metadata.id and session_ids[metadata.id] then
+          vim.wo[win].winbar = M.get_winbar()
+        end
       end
     end
   end)

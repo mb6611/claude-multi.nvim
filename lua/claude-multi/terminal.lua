@@ -51,10 +51,22 @@ end
 ---Check if terminal window is actually visible
 ---@return boolean
 function M.is_window_visible()
+  -- Get valid session IDs
+  local sessions = state.get_sessions()
+  local session_ids = {}
+  for _, sess in ipairs(sessions) do
+    session_ids[sess.id] = true
+  end
+
+  -- Check if any visible terminal belongs to our sessions
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     local buf = vim.api.nvim_win_get_buf(win)
     if vim.bo[buf].buftype == constants.BufferType.TERMINAL then
-      return true
+      -- Check if this terminal has snacks metadata and matches our session IDs
+      local metadata = vim.b[buf].snacks_terminal
+      if metadata and metadata.id and session_ids[metadata.id] then
+        return true
+      end
     end
   end
   return false
