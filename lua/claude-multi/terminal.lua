@@ -117,6 +117,9 @@ function M.on_terminal_close(buf)
     -- Delete the closed session from state
     state.remove_session(session_id)
 
+    -- Renumber remaining sessions (Chat 1, Chat 2, etc.)
+    state.renumber_sessions()
+
     -- Get remaining sessions
     local remaining = state.get_sessions()
 

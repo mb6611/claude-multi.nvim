@@ -100,6 +100,13 @@ function M.remove_session(id)
   return found
 end
 
+---Renumber session names from left to right (Chat 1, Chat 2, etc.)
+function M.renumber_sessions()
+  for i, s in ipairs(_state.sessions) do
+    s.name = "Chat " .. i
+  end
+end
+
 ---Update a session (partial update)
 ---@param id number
 ---@param updates table
