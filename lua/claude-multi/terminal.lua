@@ -80,6 +80,12 @@ function M.on_terminal_close(buf)
   if _handling_close then return end
   _handling_close = true
 
+  -- Check if buffer is still valid (may be deleted by the time autocmd fires)
+  if not vim.api.nvim_buf_is_valid(buf) then
+    _handling_close = false
+    return
+  end
+
   -- Get the session id from buffer metadata
   local metadata = vim.b[buf].snacks_terminal
   if not metadata then
